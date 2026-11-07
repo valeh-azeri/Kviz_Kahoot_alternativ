@@ -1,0 +1,12 @@
+@{
+    var path = Context.Request.Path.Value ?? "";
+    bool On(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase) || (p != "/Admin" && path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+}
+<div class="tabs" style="margin-bottom:24px;flex-wrap:wrap" role="tablist" aria-label="Admin bölmələri">
+    <a class="@(path.TrimEnd('/').Equals("/Admin", StringComparison.OrdinalIgnoreCase) ? "active" : "")" href="/Admin">Ümumi</a>
+    <a class="@(On("/Admin/Users") ? "active" : "")" href="/Admin/Users">İstifadəçilər</a>
+    <a class="@(On("/Admin/Quizzes") ? "active" : "")" href="/Admin/Quizzes">Kvizlər</a>
+    <a class="@(On("/Admin/Games") ? "active" : "")" href="/Admin/Games">Oyunlar</a>
+    <a class="@(On("/Admin/Categories") ? "active" : "")" href="/Admin/Categories">Kateqoriyalar</a>
+    <a class="@(On("/Admin/Settings") ? "active" : "")" href="/Admin/Settings">Ayarlar</a>
+</div>

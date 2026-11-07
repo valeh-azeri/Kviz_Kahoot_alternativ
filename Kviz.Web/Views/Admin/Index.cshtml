@@ -1,0 +1,50 @@
+@model AdminDashboardDto
+@{ ViewData["Title"] = "Admin paneli"; }
+<div class="container page">
+    <div class="page-head"><h1>Admin paneli</h1></div>
+    <partial name="_AdminNav" />
+
+    <div class="stat-grid mb">
+        <div class="stat"><b>@Model.Users</b><span>İstifadəçi (@Model.Admins admin)</span></div>
+        <div class="stat"><b>@Model.NewUsers7Days</b><span>Son 7 gündə qeydiyyat</span></div>
+        <div class="stat"><b>@Model.Quizzes</b><span>Kviz (@Model.PublicQuizzes hamıya açıq)</span></div>
+        <div class="stat"><b>@Model.Games</b><span>Oyun (bu gün @Model.GamesToday)</span></div>
+        <div class="stat"><b>@Model.ActiveGames</b><span>Davam edən oyun</span></div>
+        <div class="stat"><b>@Model.Players</b><span>Ümumi oyunçu</span></div>
+    </div>
+
+    <div class="row mb">
+        <span class="chip @(Model.RegistrationOpen ? "green" : "red")">Qeydiyyat: @(Model.RegistrationOpen ? "açıq" : "bağlı")</span>
+        @if (Model.BlockedUsers > 0) { <a class="chip red" href="/Admin/Users?filter=blocked">@Model.BlockedUsers bloklanmış istifadəçi</a> }
+        @if (Model.LockedQuizzes > 0) { <a class="chip amber" href="/Admin/Quizzes?filter=locked">@Model.LockedQuizzes kilidlənmiş kviz</a> }
+        <a class="btn secondary sm" href="/Admin/Settings">Ayarlar</a>
+    </div>
+
+    <div class="grid cols-2">
+        <div>
+            <div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Son qeydiyyatlar</h3><a href="/Admin/Users">Hamısı →</a></div>
+            <div class="table-wrap"><table class="t">
+                <thead><tr><th>Ad</th><th>E-poçt</th><th>Tarix</th></tr></thead>
+                <tbody>
+                @foreach (var u in Model.RecentUsers)
+                {
+                    <tr><td style="font-weight:800">@u.DisplayName @if (u.IsAdmin) { <span class="chip">admin</span> }</td><td style="overflow-wrap:anywhere">@u.Email</td><td style="white-space:nowrap">@Ui.Local(u.CreatedAt)</td></tr>
+                }
+                </tbody>
+            </table></div>
+        </div>
+        <div>
+            <div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Son oyunlar</h3><a href="/Admin/Games">Hamısı →</a></div>
+            <div class="table-wrap"><table class="t">
+                <thead><tr><th>Kviz</th><th>Host</th><th>Oyunçu</th><th>Vəziyyət</th></tr></thead>
+                <tbody>
+                @foreach (var g in Model.RecentGames)
+                {
+                    <tr><td style="font-weight:800;overflow-wrap:anywhere">@g.QuizTitle</td><td>@g.HostName</td><td>@g.PlayerCount</td><td>@Ui.StatusName(g.Status)</td></tr>
+                }
+                @if (Model.RecentGames.Count == 0) { <tr><td colspan="4" class="muted">Hələ oyun yoxdur.</td></tr> }
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+</div>

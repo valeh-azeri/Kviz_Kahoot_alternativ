@@ -1,0 +1,38 @@
+@model RegisterViewModel
+@{ ViewData["Title"] = "Qeydiyyat"; }
+<div class="auth-wrap">
+    <div class="card pad-lg auth-card">
+        <a class="logo logo-big" href="/" style="margin-bottom:18px" aria-label="Kvizo ana səhifə"><partial name="_Logo" /></a>
+        <h1>Hesab yarat</h1>
+        <p class="muted">Pulsuzdur, bütün imkanlar açıqdır. Oyuna qoşulmaq üçün hesab lazım deyil, yalnız kviz yaradanlar üçün.</p>
+        <form method="post" novalidate>
+            @if (ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="alert error" role="alert">@ViewData.ModelState[string.Empty]!.Errors[0].ErrorMessage</div>
+            }
+            <div class="field">
+                <label asp-for="DisplayName">Adınız</label>
+                <input asp-for="DisplayName" class="input" autocomplete="name" autofocus />
+                <span asp-validation-for="DisplayName" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Email">E-poçt</label>
+                <input asp-for="Email" class="input" autocomplete="email" inputmode="email" />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Password">Parol</label>
+                <input asp-for="Password" class="input" type="password" autocomplete="new-password" />
+                <div class="hint">Ən azı 6 simvol.</div>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="ConfirmPassword">Parolu təkrar yazın</label>
+                <input asp-for="ConfirmPassword" class="input" type="password" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+            </div>
+            <button class="btn lg block" type="submit">Qeydiyyatdan keç</button>
+        </form>
+        <p class="center muted mt" style="margin-bottom:0">Artıq hesabınız var? <a asp-action="Login">Daxil olun</a></p>
+    </div>
+</div>

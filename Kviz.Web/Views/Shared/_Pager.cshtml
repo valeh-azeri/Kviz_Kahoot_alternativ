@@ -1,0 +1,18 @@
+@* Model: (int Page, int TotalPages, Func<int,string> Url) *@
+@model (int Page, int TotalPages, Func<int, string> Url)
+@if (Model.TotalPages > 1)
+{
+    var start = Math.Max(1, Model.Page - 2);
+    var end = Math.Min(Model.TotalPages, Model.Page + 2);
+    <nav class="pager" aria-label="Səhifələr">
+        @if (Model.Page > 1) { <a href="@Model.Url(Model.Page - 1)" aria-label="Əvvəlki">‹</a> }
+        @if (start > 1) { <a href="@Model.Url(1)">1</a> @if (start > 2) { <span>…</span> } }
+        @for (var p = start; p <= end; p++)
+        {
+            if (p == Model.Page) { <span class="current" aria-current="page">@p</span> }
+            else { <a href="@Model.Url(p)">@p</a> }
+        }
+        @if (end < Model.TotalPages) { @if (end < Model.TotalPages - 1) { <span>…</span> } <a href="@Model.Url(Model.TotalPages)">@Model.TotalPages</a> }
+        @if (Model.Page < Model.TotalPages) { <a href="@Model.Url(Model.Page + 1)" aria-label="Növbəti">›</a> }
+    </nav>
+}

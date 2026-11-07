@@ -1,0 +1,47 @@
+@model QuizCardDto
+@{
+    var emoji = Model.CategoryIcon ?? "🎯";
+    var authed = User.Identity?.IsAuthenticated == true;
+}
+<article class="quiz-card">
+    @if (authed)
+    {
+        <button type="button" class="fav-btn @(Model.IsFavorite ? "on" : "")" data-fav="@Model.Id" aria-label="Sevimlilərə əlavə et / çıxar" title="Sevimli">
+            <svg class="icon"><use href="#i-heart" /></svg>
+        </button>
+    }
+    <div class="quiz-cover" style="--h:@Ui.Hue(Model.Id)">
+        @if (!string.IsNullOrEmpty(Model.CoverImageUrl)) { <img src="@Model.CoverImageUrl" alt="" loading="lazy" /> }
+        else { <span class="cover-emoji" aria-hidden="true">@emoji</span> }
+        <span class="count">@Model.QuestionCount sual</span>
+    </div>
+    <div class="quiz-body">
+        <h3><a asp-controller="Quiz" asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        <div class="quiz-meta">
+            <span>👤 @Model.OwnerName</span>
+            <span>▶ @Model.PlayCount dəfə oynanıb</span>
+            @if (Model.CategoryName != null) { <span>@Model.CategoryName</span> }
+        </div>
+        @if (Model.IsOwner)
+        {
+            <div class="row" style="gap:6px">
+                @if (Model.IsPublic) { <span class="chip green"><svg class="icon"><use href="#i-globe" /></svg> Hamıya açıq</span> }
+                else { <span class="chip gray"><svg class="icon"><use href="#i-lock" /></svg> Gizli</span> }
+            </div>
+        }
+    </div>
+    <div class="quiz-actions">
+        @if (authed)
+        {
+            <a class="btn sm" asp-controller="Game" asp-action="Setup" asp-route-quizId="@Model.Id"><svg class="icon"><use href="#i-play" /></svg> Oyna</a>
+        }
+        @if (Model.IsOwner)
+        {
+            <a class="btn secondary sm" asp-controller="Quiz" asp-action="Edit" asp-route-id="@Model.Id"><svg class="icon"><use href="#i-edit" /></svg> Redaktə</a>
+            <form asp-controller="Quiz" asp-action="Delete" asp-route-id="@Model.Id" method="post" style="margin-left:auto"
+                  data-confirm="Kviz silinsin?|“@Model.Title” və bütün sualları həmişəlik silinəcək. Keçmiş oyun hesabatları qalacaq.|Sil">
+                <button class="btn ghost sm" type="submit" style="color:var(--danger)" title="Kvizi sil" aria-label="Kvizi sil"><svg class="icon"><use href="#i-trash" /></svg></button>
+            </form>
+        }
+    </div>
+</article>

@@ -1,0 +1,47 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "Profil";
+    var pw = ViewBag.Password as ChangePasswordViewModel ?? new ChangePasswordViewModel();
+}
+<div class="container page">
+    <div class="page-head"><h1>Profil</h1></div>
+    <div class="stat-grid mb">
+        <div class="stat"><b>@Model.Profile.QuizCount</b><span>Kviz</span></div>
+        <div class="stat"><b>@Model.Profile.GameCount</b><span>Keçirilmiş oyun</span></div>
+        <div class="stat"><b>@Model.Profile.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</b><span>Qoşulma tarixi</span></div>
+    </div>
+    <div class="grid cols-2">
+        <form class="card" asp-action="UpdateProfile" method="post" novalidate>
+            <h3>Məlumatlar</h3>
+            <div class="field">
+                <label>E-poçt</label>
+                <input class="input" value="@Model.Profile.Email" disabled />
+            </div>
+            <div class="field">
+                <label asp-for="DisplayName">Ad</label>
+                <input asp-for="DisplayName" class="input" />
+                <span asp-validation-for="DisplayName" class="field-error"></span>
+            </div>
+            <button class="btn" type="submit">Yadda saxla</button>
+        </form>
+        <form class="card" asp-action="ChangePassword" method="post" novalidate>
+            <h3>Parolu dəyiş</h3>
+            <div class="field">
+                <label for="CurrentPassword">Cari parol</label>
+                <input id="CurrentPassword" name="CurrentPassword" type="password" class="input" autocomplete="current-password" />
+                <span class="field-error" data-valmsg-for="CurrentPassword">@Html.ValidationMessage("CurrentPassword")</span>
+            </div>
+            <div class="field">
+                <label for="NewPassword">Yeni parol</label>
+                <input id="NewPassword" name="NewPassword" type="password" class="input" autocomplete="new-password" />
+                <span class="field-error">@Html.ValidationMessage("NewPassword")</span>
+            </div>
+            <div class="field">
+                <label for="ConfirmNewPassword">Yeni parolu təkrar yazın</label>
+                <input id="ConfirmNewPassword" name="ConfirmNewPassword" type="password" class="input" autocomplete="new-password" />
+                <span class="field-error">@Html.ValidationMessage("ConfirmNewPassword")</span>
+            </div>
+            <button class="btn secondary" type="submit">Parolu yenilə</button>
+        </form>
+    </div>
+</div>

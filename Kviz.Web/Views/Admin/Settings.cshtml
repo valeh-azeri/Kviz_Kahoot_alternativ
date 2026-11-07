@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Ayarlar · Admin";
+    bool open = ViewBag.RegistrationOpen ?? true;
+    bool guest = ViewBag.GuestLibrary ?? true;
+}
+<div class="container page" style="max-width:860px">
+    <div class="page-head"><h1>Admin paneli</h1></div>
+    <partial name="_AdminNav" />
+
+    <form class="card" method="post" asp-controller="Admin" asp-action="SaveSettings">
+        <h3>Qeydiyyat</h3>
+        <p class="muted">Açıq olanda saytı görən hər kəs özü hesab yarada bilər (lokal şəbəkədə eyni Wi-Fi-dakı hər kəs). Bağlananda yeni hesabları yalnız siz <a href="/Admin/Users">İstifadəçilər</a> bölməsindən yarada bilərsiniz. Oyuna qoşulmaq üçün hesab lazım deyil, qeydiyyat bağlı olsa da oyunçular PIN ilə qoşula bilər.</p>
+        <label class="switch-row" style="border:0">
+            <span><b>Qeydiyyat açıqdır</b><br /><span class="muted" style="font-size:.9rem">Hazırda: @(open ? "açıq" : "bağlı")</span></span>
+            <input type="checkbox" name="registrationOpen" value="true" @(open ? "checked" : "") style="width:24px;height:24px;accent-color:var(--brand)" />
+            <input type="hidden" name="registrationOpen" value="false" />
+        </label>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:20px 0" />
+        <h3>Kvizlərə baxış</h3>
+        <p class="muted">Açıq olanda hesabı olmayan ziyarətçilər də hamıya açıq kvizlər kitabxanasına (<b>Kəşf et</b>) və kvizlərin təsvirinə baxa bilər. Bağlananda bu səhifələr yalnız daxil olmuş istifadəçilərə görünür, qonaqlar giriş səhifəsinə yönləndirilir. Oyuna PIN ilə qoşulmaq bu ayardan asılı deyil və həmişə hesabsız işləyir.</p>
+        <label class="switch-row" style="border:0">
+            <span><b>Qeydiyyatsız baxış açıqdır</b><br /><span class="muted" style="font-size:.9rem">Hazırda: @(guest ? "açıq" : "bağlı, yalnız daxil olanlar görür")</span></span>
+            <input type="checkbox" name="guestLibrary" value="true" @(guest ? "checked" : "") style="width:24px;height:24px;accent-color:var(--brand)" />
+            <input type="hidden" name="guestLibrary" value="false" />
+        </label>
+
+        <button class="btn" type="submit">Yadda saxla</button>
+    </form>
+
+    <div class="card mt">
+        <h3>Administratorlar necə təyin olunur?</h3>
+        <ul class="muted" style="margin:0;padding-left:20px">
+            <li><code>appsettings.json</code> faylında <code>Kviz:AdminEmails</code> siyahısındakı e-poçtlar qeydiyyatdan keçəndə administrator olur.</li>
+            <li>Bu siyahı boşdursa, sistemdə ilk qeydiyyatdan keçən istifadəçi administrator olur. Siyahı doldurulubsa, yalnız həmin e-poçtlar admin olur.</li>
+            <li>Mövcud administrator başqasını İstifadəçilər bölməsindən admin edə bilər.</li>
+        </ul>
+    </div>
+</div>

@@ -1,0 +1,61 @@
+@model PagedResult<AdminQuizDto>
+@{
+    ViewData["Title"] = "Kvizlər · Admin";
+    string q = ViewBag.Q ?? "";
+    string filter = ViewBag.Filter ?? "";
+    var back = Context.Request.Path + Context.Request.QueryString;
+    string PageUrl(int p) => Url.Action("Quizzes", "Admin", new { q, filter, page = p })!;
+}
+<div class="container page">
+    <div class="page-head"><h1>Admin paneli</h1></div>
+    <partial name="_AdminNav" />
+
+    <form method="get" class="toolbar">
+        <div class="search">
+            <svg class="icon"><use href="#i-search" /></svg>
+            <input class="input" name="q" value="@q" placeholder="Kviz adı və ya sahibi axtar…" aria-label="Axtarış" />
+        </div>
+        <select class="input" name="filter" style="width:auto" onchange="this.form.submit()" aria-label="Filtr">
+            <option value="" selected="@(filter == "")">Hamısı</option>
+            <option value="public" selected="@(filter == "public")">Hamıya açıq</option>
+            <option value="private" selected="@(filter == "private")">Gizli</option>
+            <option value="locked" selected="@(filter == "locked")">Kilidlənmiş</option>
+        </select>
+        <button class="btn" type="submit">Axtar</button>
+    </form>
+
+    <div class="table-wrap">
+        <table class="t">
+            <thead><tr><th>Kviz</th><th>Sahibi</th><th>Sual</th><th>Oynanıb</th><th>Vəziyyət</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var x in Model.Items)
+            {
+                <tr>
+                    <td style="min-width:200px;font-weight:800;overflow-wrap:anywhere"><a href="@Url.Action("Details", "Quiz", new { id = x.Id })">@x.Title</a><br /><span class="muted" style="font-size:.82rem;font-weight:600">@Ui.Local(x.UpdatedAt)</span></td>
+                    <td><b>@x.OwnerName</b><br /><span class="muted" style="font-size:.85rem;overflow-wrap:anywhere">@x.OwnerEmail</span></td>
+                    <td>@x.QuestionCount</td>
+                    <td>@x.PlayCount</td>
+                    <td>
+                        @if (x.AdminLocked) { <span class="chip red">Kilidli</span> }
+                        else if (x.IsPublic) { <span class="chip green">Hamıya açıq</span> }
+                        else { <span class="chip gray">Gizli</span> }
+                    </td>
+                    <td style="text-align:right;white-space:nowrap">
+                        <form asp-controller="Admin" asp-action="LockQuiz" asp-route-id="@x.Id" method="post" style="display:inline"
+                              data-confirm="@(x.AdminLocked ? "Kilid götürülsün?|Sahibi kvizi yenidən hamıya aça biləcək.|Götür" : "Kviz gizlədilsin və kilidlənsin?|Kitabxanadan dərhal çıxacaq, sahibi onu yenidən aça bilməyəcək. Oyun keçirmək yenə mümkündür.|Kilidlə")">
+                            <input type="hidden" name="returnUrl" value="@back" /><input type="hidden" name="locked" value="@((!x.AdminLocked).ToString().ToLowerInvariant())" />
+                            <button class="btn secondary sm" type="submit">@(x.AdminLocked ? "Kilidi götür" : "Gizlət və kilidlə")</button>
+                        </form>
+                        <form asp-controller="Admin" asp-action="DeleteQuiz" asp-route-id="@x.Id" method="post" style="display:inline" data-confirm="Kviz silinsin?|Kviz və bütün sualları silinəcək. Keçmiş hesabatlar qalacaq.|Sil">
+                            <input type="hidden" name="returnUrl" value="@back" />
+                            <button class="btn ghost sm" type="submit" style="color:var(--danger)" aria-label="Sil"><svg class="icon"><use href="#i-trash" /></svg></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0) { <tr><td colspan="6" class="muted center" style="padding:30px">Kviz tapılmadı.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_Pager" model="(Model.Page, Model.TotalPages, (Func<int, string>)PageUrl)" />
+</div>

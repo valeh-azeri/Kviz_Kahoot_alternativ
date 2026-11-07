@@ -1,0 +1,23 @@
+@model JoinViewModel
+@{
+    Layout = "_GameLayout";
+    ViewData["Title"] = "Oyuna qoşul";
+}
+<div class="p-shell">
+    <div class="p-center" style="max-width:440px;margin-inline:auto;width:100%">
+        <a class="logo logo-big" href="/" style="color:#fff;margin-bottom:10px" aria-label="Kvizo ana səhifə">
+            <partial name="_Logo" />
+        </a>
+        <form method="post" action="/join" class="g-card" style="display:grid;gap:14px" novalidate>
+            @Html.AntiForgeryToken()
+            <h1 style="margin:0;font-size:1.6rem">Oyuna qoşul</h1>
+            <input class="g-input" name="pin" value="@Model.Pin" data-pin inputmode="numeric" autocomplete="off" placeholder="PIN kod" maxlength="8" autofocus aria-label="Oyun PIN kodu" />
+            @if (!string.IsNullOrEmpty(Model.Error))
+            {
+                <div class="g-error" role="alert" style="margin:0">@Model.Error</div>
+            }
+            <button class="btn lg block" type="submit">Qoşul</button>
+            <a class="center" href="/" style="font-weight:800;color:var(--brand-700)">← Ana səhifə</a>
+        </form>
+    </div>
+</div>

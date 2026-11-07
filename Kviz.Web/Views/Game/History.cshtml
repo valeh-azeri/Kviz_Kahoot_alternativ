@@ -1,0 +1,55 @@
+@model HistoryViewModel
+@{
+    ViewData["Title"] = "Hesabatlar";
+    string PageUrl(int p) => Url.Action("History", "Game", new { page = p })!;
+}
+<div class="container page">
+    <div class="page-head"><h1>Hesabatlar</h1></div>
+    @if (Model.Result.Items.Count == 0)
+    {
+        <div class="empty">
+            <div class="big">📊</div>
+            <h3>Hələ oyun keçirməmisiniz</h3>
+            <p class="muted">Oyun bitəndən sonra nəticələr burada görünəcək.</p>
+            <a class="btn" asp-controller="Quiz" asp-action="Index">Kvizlərimə get</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="t">
+                <thead><tr><th>Tarix</th><th>Kviz</th><th>Rejim</th><th>Oyunçu</th><th>Düzgünlük</th><th>Vəziyyət</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var g in Model.Result.Items)
+                {
+                    <tr>
+                        <td style="white-space:nowrap">@Ui.Local(g.CreatedAt)</td>
+                        <td style="min-width:180px;font-weight:800;overflow-wrap:anywhere">@g.QuizTitle</td>
+                        <td style="white-space:nowrap">@Ui.ModeEmoji(g.Mode) @Ui.ModeName(g.Mode)</td>
+                        <td>@g.PlayerCount</td>
+                        <td style="min-width:120px">
+                            <div class="row" style="gap:8px;flex-wrap:nowrap"><div class="bar-track" style="flex:1"><div class="bar-fill @(g.AverageAccuracy >= 70 ? "good" : g.AverageAccuracy >= 40 ? "mid" : "bad")" style="width:@(g.AverageAccuracy.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></div></div><b>@g.AverageAccuracy.ToString("0")%</b></div>
+                        </td>
+                        <td>
+                            @if (g.Status == GameStatus.Finished) { <span class="chip green">@Ui.StatusName(g.Status)</span> }
+                            else if (g.Status == GameStatus.Cancelled) { <span class="chip gray">@Ui.StatusName(g.Status)</span> }
+                            else { <span class="chip amber">@Ui.StatusName(g.Status)</span> }
+                        </td>
+                        <td style="white-space:nowrap;text-align:right">
+                            @if (g.Mode == GameMode.Challenge && g.Status == GameStatus.InProgress)
+                            {
+                                <a class="btn sm" asp-action="Challenge" asp-route-id="@g.Id">İdarə et</a>
+                            }
+                            <a class="btn secondary sm" asp-action="Report" asp-route-id="@g.Id">Hesabat</a>
+                            <form asp-action="Delete" asp-route-id="@g.Id" method="post" style="display:inline" data-confirm="Hesabat silinsin?|Oyunun bütün nəticələri həmişəlik silinəcək.|Sil">
+                                <button class="btn ghost sm" type="submit" style="color:var(--danger)" aria-label="Sil"><svg class="icon"><use href="#i-trash" /></svg></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(Model.Result.Page, Model.Result.TotalPages, (Func<int, string>)PageUrl)" />
+    }
+</div>

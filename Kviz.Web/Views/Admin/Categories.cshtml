@@ -1,0 +1,95 @@
+@model List<AdminCategoryDto>
+@{
+    ViewData["Title"] = "Kateqoriyalar · Admin";
+    var emojis = new[] { "🌍", "➗", "🔬", "🏛️", "🗺️", "📚", "🗣️", "🎨", "⚽", "💻", "🎉", "✨", "🎵", "🎬", "🍎", "🧪", "🏆", "🐾", "🚀", "💡", "📐", "🌱", "🧠", "🎮" };
+}
+<div class="container page" style="max-width:860px">
+    <div class="page-head"><h1>Admin paneli</h1></div>
+    <partial name="_AdminNav" />
+
+    <div class="toolbar">
+        <p class="muted grow" style="margin:0">Kateqoriyalar kvizin redaktorunda və kitabxanadakı süzgəcdə görünür. Sıranı oxlarla dəyişə bilərsiniz.</p>
+        <button class="btn" type="button" id="btnNewCat"><svg class="icon"><use href="#i-plus" /></svg> Kateqoriya əlavə et</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="t">
+            <thead><tr><th style="width:70px">Sıra</th><th>Kateqoriya</th><th>Kviz</th><th></th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Count; i++)
+            {
+                var c = Model[i];
+                <tr>
+                    <td style="white-space:nowrap">
+                        <form asp-controller="Admin" asp-action="MoveCategory" asp-route-id="@c.Id" method="post" style="display:inline">
+                            <input type="hidden" name="up" value="true" />
+                            <button class="btn ghost sm" type="submit" aria-label="Yuxarı çıxar" @(i == 0 ? "disabled" : "")>▲</button>
+                        </form>
+                        <form asp-controller="Admin" asp-action="MoveCategory" asp-route-id="@c.Id" method="post" style="display:inline">
+                            <input type="hidden" name="up" value="false" />
+                            <button class="btn ghost sm" type="submit" aria-label="Aşağı endir" @(i == Model.Count - 1 ? "disabled" : "")>▼</button>
+                        </form>
+                    </td>
+                    <td><span style="font-size:1.3rem;margin-right:8px" aria-hidden="true">@c.Icon</span><b>@c.Name</b></td>
+                    <td>@c.QuizCount</td>
+                    <td style="text-align:right;white-space:nowrap">
+                        <button class="btn secondary sm btn-edit-cat" type="button" data-id="@c.Id" data-name="@c.Name" data-icon="@c.Icon">Dəyiş</button>
+                        <form asp-controller="Admin" asp-action="DeleteCategory" asp-route-id="@c.Id" method="post" style="display:inline"
+                              data-confirm="Kateqoriya silinsin?|@(c.QuizCount > 0 ? c.QuizCount + " kviz kateqoriyasız qalacaq (kvizlər silinmir)." : "Bu kateqoriyada kviz yoxdur.")|Sil">
+                            <button class="btn ghost sm" type="submit" style="color:var(--danger)" aria-label="Sil"><svg class="icon"><use href="#i-trash" /></svg></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0) { <tr><td colspan="4" class="muted center" style="padding:30px">Hələ kateqoriya yoxdur. Yuxarıdakı düymə ilə əlavə edin.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<dialog id="dlgCat">
+    <form asp-controller="Admin" asp-action="SaveCategory" method="post">
+        <input type="hidden" name="id" id="catId" />
+        <div class="dlg-body">
+            <h3 id="catTitle">Yeni kateqoriya</h3>
+            <div class="field"><label for="catName">Ad</label><input id="catName" name="name" class="input" required minlength="2" maxlength="60" /></div>
+            <div class="field">
+                <label for="catIcon">Nişan (emoji)</label>
+                <input id="catIcon" name="icon" class="input" maxlength="16" style="max-width:120px;font-size:1.4rem;text-align:center" />
+                <div class="hint">Aşağıdan seçin və ya klaviaturanın emoji panelindən yazın (Windows: Win + nöqtə). Boş qalsa 🎯 qoyulur.</div>
+                <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+                    @foreach (var e in emojis) { <button type="button" class="btn ghost sm cat-emoji" style="font-size:1.25rem;padding:4px 8px" data-e="@e">@e</button> }
+                </div>
+            </div>
+        </div>
+        <div class="dlg-actions">
+            <button type="button" class="btn secondary" onclick="this.closest('dialog').close()">Ləğv et</button>
+            <button type="submit" class="btn">Yadda saxla</button>
+        </div>
+    </form>
+</dialog>
+
+@section Scripts {
+<script>
+(function () {
+    var dlg = document.getElementById('dlgCat');
+    var idEl = document.getElementById('catId'), nameEl = document.getElementById('catName'), iconEl = document.getElementById('catIcon');
+    function open(id, name, icon) {
+        idEl.value = id || '';
+        idEl.disabled = !id;
+        nameEl.value = name || '';
+        iconEl.value = icon || '';
+        document.getElementById('catTitle').textContent = id ? 'Kateqoriyanı dəyiş' : 'Yeni kateqoriya';
+        dlg.showModal();
+        nameEl.focus();
+    }
+    document.getElementById('btnNewCat').addEventListener('click', function () { open(); });
+    document.querySelectorAll('.btn-edit-cat').forEach(function (b) {
+        b.addEventListener('click', function () { open(b.dataset.id, b.dataset.name, b.dataset.icon); });
+    });
+    document.querySelectorAll('.cat-emoji').forEach(function (b) {
+        b.addEventListener('click', function () { iconEl.value = b.dataset.e; });
+    });
+})();
+</script>
+}

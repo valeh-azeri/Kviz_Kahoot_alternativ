@@ -1,0 +1,59 @@
+@model LibraryViewModel
+@{
+    ViewData["Title"] = "Kəşf et";
+    var q = Model.Query;
+    string PageUrl(int p) => Url.Action("Index", "Library", new { search = q.Search, categoryId = q.CategoryId, language = q.Language, sort = q.Sort, page = p })!;
+}
+<div class="container page">
+    <div class="page-head">
+        <div>
+            <h1>Kvizləri kəşf et</h1>
+            <p class="muted" style="margin:6px 0 0">Başqalarının hamıya açdığı kvizlərə bax, oyna və ya öz hesabına kopyala.</p>
+        </div>
+    </div>
+
+    <form method="get" class="toolbar">
+        <div class="search">
+            <svg class="icon"><use href="#i-search" /></svg>
+            <input class="input" name="search" value="@q.Search" placeholder="Kviz adı və ya təsvir axtar…" aria-label="Axtarış" />
+        </div>
+        <select class="input" name="language" style="width:auto" aria-label="Dil" onchange="this.form.submit()">
+            <option value="">Bütün dillər</option>
+            @foreach (var l in Ui.Languages)
+            {
+                <option value="@l.Code" selected="@(q.Language == l.Code)">@l.Name</option>
+            }
+        </select>
+        <select class="input" name="sort" style="width:auto" aria-label="Sıralama" onchange="this.form.submit()">
+            <option value="popular" selected="@(q.Sort != "new")">Ən populyar</option>
+            <option value="new" selected="@(q.Sort == "new")">Ən yeni</option>
+        </select>
+        @if (q.CategoryId.HasValue) { <input type="hidden" name="categoryId" value="@q.CategoryId" /> }
+        <button class="btn" type="submit">Axtar</button>
+    </form>
+
+    <div class="cat-row mb">
+        <a class="cat-pill @(q.CategoryId == null ? "active" : "")" href="@Url.Action("Index", new { search = q.Search, language = q.Language, sort = q.Sort })">Hamısı</a>
+        @foreach (var c in Model.Categories)
+        {
+            <a class="cat-pill @(q.CategoryId == c.Id ? "active" : "")" href="@Url.Action("Index", new { search = q.Search, categoryId = c.Id, language = q.Language, sort = q.Sort })">@c.Icon @c.Name</a>
+        }
+    </div>
+
+    @if (Model.Result.Items.Count == 0)
+    {
+        <div class="empty">
+            <div class="big">🔍</div>
+            <h3>Heç nə tapılmadı</h3>
+            <p class="muted">Başqa söz və ya kateqoriya yoxlayın. Və ya ilk kvizi siz yaradın.</p>
+            <a class="btn" asp-controller="Quiz" asp-action="Create">Kviz yarat</a>
+        </div>
+    }
+    else
+    {
+        <div class="grid cols-3">
+            @foreach (var item in Model.Result.Items) { <partial name="_QuizCard" model="item" /> }
+        </div>
+        <partial name="_Pager" model="(Model.Result.Page, Model.Result.TotalPages, (Func<int, string>)PageUrl)" />
+    }
+</div>

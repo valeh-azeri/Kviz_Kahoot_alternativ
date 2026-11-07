@@ -1,0 +1,31 @@
+@model QuizImportViewModel
+@{ ViewData["Title"] = "Excel-dən idxal"; }
+<div class="container page" style="max-width:760px">
+    <div class="page-head"><h1>Excel-dən kviz yarat</h1></div>
+    <div class="card">
+        <ol style="padding-left:20px;margin-top:0" class="muted">
+            <li>Şablonu yükləyin və sualları yazın.</li>
+            <li>Faylı buraya yükləyin, kviz avtomatik yaranacaq.</li>
+            <li>Redaktorda şəkil, sürüşdürücü və digər detalları əlavə edə bilərsiniz.</li>
+        </ol>
+        <a class="btn secondary" asp-action="Template"><svg class="icon"><use href="#i-download" /></svg> Şablonu yüklə (.xlsx)</a>
+        <hr style="border:0;border-top:1px solid var(--line);margin:24px 0" />
+        <form method="post" enctype="multipart/form-data" novalidate>
+            @if (ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="alert error" role="alert">@ViewData.ModelState[string.Empty]!.Errors[0].ErrorMessage</div>
+            }
+            <div class="field">
+                <label asp-for="Title">Kvizin adı</label>
+                <input asp-for="Title" class="input" maxlength="120" />
+                <span asp-validation-for="Title" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="File">Excel faylı</label>
+                <input asp-for="File" type="file" class="input" accept=".xlsx" />
+                <span asp-validation-for="File" class="field-error"></span>
+            </div>
+            <button class="btn lg" type="submit"><svg class="icon"><use href="#i-upload" /></svg> İdxal et</button>
+        </form>
+    </div>
+</div>

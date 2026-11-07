@@ -1,0 +1,26 @@
+@model HostViewModel
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@{
+    Layout = "_GameLayout";
+    ViewData["Title"] = Model.Game.QuizTitle;
+    var json = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+}
+<script type="application/json" id="host-init">@Html.Raw(JsonSerializer.Serialize(new { gameId = Model.Game.GameId, pin = Model.Game.Pin, mode = Model.Game.Mode, title = Model.Game.QuizTitle, join = Model.Join }, json))</script>
+
+<div class="g-shell">
+    <div class="g-top">
+        <span class="logo-lockup host-logo"><partial name="_LogoMark" /></span>
+        <span class="g-title" id="gTitle">@Model.Game.QuizTitle</span>
+        <span class="g-chip" id="gProgress" hidden></span>
+        <span class="grow"></span>
+        <button type="button" class="g-btn ghost sm" id="btnEnd">Oyunu bitir</button>
+    </div>
+    <div class="g-main" id="stage">
+        <div class="spinner" aria-label="Yüklənir"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/host.js" asp-append-version="true"></script>
+}

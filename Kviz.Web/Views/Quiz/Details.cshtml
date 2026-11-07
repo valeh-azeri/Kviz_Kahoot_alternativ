@@ -1,0 +1,126 @@
+@model QuizDetailsDto
+@{
+    var c = Model.Card;
+    ViewData["Title"] = c.Title;
+    var authed = User.Identity?.IsAuthenticated == true;
+}
+<div class="container page">
+    <div class="details-head">
+        <div>
+            <div class="quiz-cover" style="--h:@Ui.Hue(c.Id);border-radius:var(--r-lg);box-shadow:var(--shadow)">
+                @if (!string.IsNullOrEmpty(c.CoverImageUrl)) { <img src="@c.CoverImageUrl" alt="" /> }
+                else { <span class="cover-emoji" aria-hidden="true">@(c.CategoryIcon ?? "🎯")</span> }
+            </div>
+        </div>
+        <div>
+            <div class="row" style="margin-bottom:10px">
+                @if (c.CategoryName != null) { <span class="chip">@c.CategoryIcon @c.CategoryName</span> }
+                <span class="chip gray">@Ui.LanguageName(c.Language)</span>
+                @if (c.IsOwner)
+                {
+                    if (c.IsPublic) { <span class="chip green"><svg class="icon"><use href="#i-globe" /></svg> Hamıya açıq</span> }
+                    else { <span class="chip gray"><svg class="icon"><use href="#i-lock" /></svg> Gizli</span> }
+                }
+                @if (c.AdminLocked) { <span class="chip red">Administrator tərəfindən kilidlənib</span> }
+            </div>
+            <h1 style="overflow-wrap:anywhere">@c.Title</h1>
+            @if (!string.IsNullOrWhiteSpace(c.Description)) { <p class="muted" style="font-size:1.05rem;overflow-wrap:anywhere">@c.Description</p> }
+            <div class="row muted" style="font-weight:700;margin-bottom:18px">
+                <span>👤 @c.OwnerName</span>
+                <span>❓ @c.QuestionCount sual</span>
+                <span>⏱ ~@Ui.Duration(Model.TotalSeconds)</span>
+                <span>▶ @c.PlayCount dəfə oynanıb</span>
+            </div>
+
+            <div class="row">
+                @if (authed)
+                {
+                    <a class="btn lg" asp-controller="Game" asp-action="Setup" asp-route-quizId="@c.Id"><svg class="icon"><use href="#i-play" /></svg> Oyna</a>
+                    if (c.IsOwner)
+                    {
+                        <a class="btn secondary lg" asp-action="Edit" asp-route-id="@c.Id"><svg class="icon"><use href="#i-edit" /></svg> Redaktə</a>
+                    }
+                    <form asp-action="Copy" asp-route-id="@c.Id" method="post">
+                        <button class="btn secondary lg" type="submit"><svg class="icon"><use href="#i-copy" /></svg> Kopyala</button>
+                    </form>
+                    <button type="button" class="btn ghost lg fav-btn-inline @(c.IsFavorite ? "on" : "")" data-fav="@c.Id" style="position:static;width:auto;border-radius:12px;background:transparent">
+                        <svg class="icon"><use href="#i-heart" /></svg> Sevimli
+                    </button>
+                }
+                else
+                {
+                    <a class="btn lg" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Oynamaq üçün daxil olun</a>
+                }
+            </div>
+
+            @if (c.IsOwner)
+            {
+                <div class="card flat mt" style="padding:16px">
+                    <div class="row between">
+                        <div>
+                            <b>Kitabxanada paylaş</b>
+                            <div class="muted" style="font-size:.9rem">Hamıya açıq kvizləri hər kəs tapıb oynaya və ya kopyalaya bilər.</div>
+                        </div>
+                        <div class="row">
+                            <form asp-action="Visibility" asp-route-id="@c.Id" asp-route-isPublic="@(!c.IsPublic)" method="post">
+                                <button class="btn secondary sm" type="submit">@(c.IsPublic ? "Gizli et" : "Hamıya aç")</button>
+                            </form>
+                            <a class="btn ghost sm" asp-action="ExportExcel" asp-route-id="@c.Id"><svg class="icon"><use href="#i-download" /></svg> Excel</a>
+                            <form asp-action="Delete" asp-route-id="@c.Id" method="post" data-confirm="Kviz silinsin?|Kviz və bütün sualları silinəcək. Keçmiş hesabatlar qalacaq.|Sil">
+                                <button class="btn ghost sm" type="submit" style="color:var(--danger)"><svg class="icon"><use href="#i-trash" /></svg> Sil</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <h2 class="mt">Suallar (@Model.Questions.Count)</h2>
+    <ol class="q-list">
+        @foreach (var q in Model.Questions)
+        {
+            <li class="q-item">
+                <span class="q-num">@q.Order</span>
+                <div class="grow" style="min-width:0">
+                    <div style="font-weight:800;overflow-wrap:anywhere">@(string.IsNullOrWhiteSpace(q.Text) ? "🖼 Şəkilli sual" : q.Text)</div>
+                    <div class="meta">
+                        <span class="chip">@Ui.TypeEmoji(q.Type) @Ui.TypeName(q.Type)</span>
+                        <span class="chip gray"><svg class="icon"><use href="#i-clock" /></svg> @q.TimeLimitSeconds san</span>
+                        @if (q.PointsMode == PointsMode.Double) { <span class="chip amber">2× xal</span> }
+                        else if (q.PointsMode == PointsMode.NoPoints) { <span class="chip gray">Xalsız</span> }
+                    </div>
+                    @if (q.Options is { Count: > 0 })
+                    {
+                        <ul class="q-opts">
+                            @foreach (var o in q.Options) { <li class="@(o.IsCorrect && q.Type != QuestionType.Poll && q.Type != QuestionType.Puzzle ? "ok" : "")">@o.Text</li> }
+                        </ul>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(q.ImageUrl)) { <img class="thumb" src="@q.ImageUrl" alt="" loading="lazy" /> }
+            </li>
+        }
+    </ol>
+
+    @if (c.IsOwner && Model.RecentGames.Count > 0)
+    {
+        <h2 class="mt">Son oyunlar</h2>
+        <div class="table-wrap">
+            <table class="t">
+                <thead><tr><th>Tarix</th><th>Rejim</th><th>PIN</th><th>Oyunçu</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var g in Model.RecentGames)
+                {
+                    <tr>
+                        <td>@Ui.Local(g.CreatedAt)</td>
+                        <td>@Ui.ModeEmoji(g.Mode) @Ui.ModeName(g.Mode)</td>
+                        <td><b>@g.Pin</b></td>
+                        <td>@g.PlayerCount</td>
+                        <td style="text-align:right"><a class="btn sm secondary" asp-controller="Game" asp-action="Report" asp-route-id="@g.Id">Hesabat</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

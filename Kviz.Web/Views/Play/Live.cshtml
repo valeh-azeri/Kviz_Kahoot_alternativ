@@ -1,0 +1,20 @@
+@model PlayViewModel
+@{
+    Layout = "_GameLayout";
+    ViewData["Title"] = Model.QuizTitle;
+}
+<script type="application/json" id="avatar-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { photos = Model.AllowPhotoAvatars, groups = Kviz.Business.Games.AvatarCatalog.Groups.Select(g => new { title = g.Title, items = g.Items }) }))</script>
+<div class="p-shell" id="app" data-pin="@Model.Pin" data-title="@Model.QuizTitle">
+    <div class="p-bar" id="pBar" hidden>
+        <span class="av-slot" id="pAv"></span>
+        <span class="nick" id="pNick"></span>
+        <span class="score" id="pScore">0</span>
+    </div>
+    <div class="p-body" id="pBody">
+        <div class="p-center"><div class="spinner" aria-label="Yüklənir"></div></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/play.js" asp-append-version="true"></script>
+}

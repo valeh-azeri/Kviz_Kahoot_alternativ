@@ -1,0 +1,76 @@
+@model HomeViewModel
+@{
+    ViewData["Title"] = "";
+    var authed = User.Identity?.IsAuthenticated == true;
+}
+<section class="hero">
+    <div class="hero-shapes" aria-hidden="true">
+        <span style="left:6%;top:14%;background:var(--c0);border-radius:50% 50% 8px 8px"></span>
+        <span style="left:44%;top:70%;background:var(--c1);border-radius:50%;animation-delay:-3s"></span>
+        <span style="left:88%;top:10%;background:var(--c2);animation-delay:-5s"></span>
+        <span style="left:70%;top:82%;background:var(--c3);border-radius:8px 50% 8px 50%;animation-delay:-2s"></span>
+    </div>
+    <div class="container">
+        <div>
+            <h1>Öyrənməni <em>oyuna</em> çevir.</h1>
+            <p class="lead">Kviz yarat, PIN kodu paylaş, sinif və ya dostlarla canlı yarış keçir. Bütün imkanlar tam pulsuzdur və internet olmadan da işləyir.</p>
+            <div class="row">
+                @if (authed)
+                {
+                    <a class="btn accent lg" asp-controller="Quiz" asp-action="Create"><svg class="icon"><use href="#i-plus" /></svg> Kviz yarat</a>
+                    <a class="btn secondary lg" asp-controller="Quiz" asp-action="Index">Kvizlərim</a>
+                }
+                else
+                {
+                    <a class="btn accent lg" asp-controller="Account" asp-action="Register">Pulsuz başla</a>
+                    if (Model.ShowLibrary)
+                    {
+                        <a class="btn secondary lg" asp-controller="Library" asp-action="Index">Kvizlərə bax</a>
+                    }
+                    else
+                    {
+                        <a class="btn secondary lg" asp-controller="Account" asp-action="Login">Daxil ol</a>
+                    }
+                }
+            </div>
+        </div>
+        <form class="join-card" action="/join" method="post">
+            @Html.AntiForgeryToken()
+            <h2>Oyuna qoşul</h2>
+            <p class="muted">Ekranda göstərilən PIN kodu yaz.</p>
+            <div class="field"><input class="input pin-input" name="pin" data-pin inputmode="numeric" autocomplete="off" placeholder="PIN kod" maxlength="8" aria-label="Oyun PIN kodu" required /></div>
+            <button class="btn lg block" type="submit">Qoşul <svg class="icon"><use href="#i-arrow" /></svg></button>
+        </form>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head"><h2>Hər şey bir yerdə</h2></div>
+        <div class="grid cols-4">
+            <div class="feature"><div class="ico" style="background:#ffe3e7">🎮</div><h3>Canlı oyun</h3><p>Sinifdə böyük ekranda yarış. Hər sualdan sonra liderlər cədvəli və yekunda podium.</p></div>
+            <div class="feature"><div class="ico" style="background:#e1ecff">👥</div><h3>Komanda rejimi</h3><p>Oyunçular avtomatik komandalara bölünür, komanda xalları birlikdə hesablanır.</p></div>
+            <div class="feature"><div class="ico" style="background:#fff0c2">📝</div><h3>Tapşırıq rejimi</h3><p>Şagirdlər son tarixə qədər sualları öz tempi ilə, evdə keçir.</p></div>
+            <div class="feature"><div class="ico" style="background:#d9f6e7">📊</div><h3>Hesabat</h3><p>Hər sual və oyunçu üzrə statistika. Excel və PDF-ə yüklə.</p></div>
+            <div class="feature"><div class="ico" style="background:#efe4ff">🧩</div><h3>8 sual növü</h3><p>Test, Doğru/Yanlış, cavabı yaz, sürüşdürücü, puzzle, sorğu, söz buludu, açıq sual.</p></div>
+            <div class="feature"><div class="ico" style="background:#ffe3f1">⚡</div><h3>Güclər</h3><p>İkiqat xal, 50/50 və seriya qoruyucusu ilə oyun daha maraqlı olur.</p></div>
+            <div class="feature"><div class="ico" style="background:#dff3ff">📶</div><h3>İnternetsiz</h3><p>Eyni Wi-Fi və ya telefon hotspot-u kifayətdir, sayt sizin kompüterdə işləyir.</p></div>
+            <div class="feature"><div class="ico" style="background:#ffeede">📚</div><h3>Açıq kitabxana</h3><p>Başqalarının kvizlərini tap, kopyala və öz ehtiyacına uyğunlaşdır.</p></div>
+        </div>
+    </div>
+</section>
+
+@if (Model.Popular.Count > 0)
+{
+    <section class="section tint">
+        <div class="container">
+            <div class="section-head">
+                <h2>Populyar kvizlər</h2>
+                <a class="btn secondary sm" asp-controller="Library" asp-action="Index">Hamısına bax <svg class="icon"><use href="#i-arrow" /></svg></a>
+            </div>
+            <div class="grid cols-3">
+                @foreach (var q in Model.Popular) { <partial name="_QuizCard" model="q" /> }
+            </div>
+        </div>
+    </section>
+}

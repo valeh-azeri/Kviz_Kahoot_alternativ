@@ -1,0 +1,142 @@
+@model GameReportDto
+@using System.Globalization
+@{
+    ViewData["Title"] = "Hesabat · " + Model.QuizTitle;
+    var inv = CultureInfo.InvariantCulture;
+    string Pct(double v) => v.ToString("0", inv);
+    string Cls(double v) => v >= 70 ? "good" : v >= 40 ? "mid" : "bad";
+    string[] ColorVars = { "var(--c0)", "var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)" };
+    var maxScore = Model.Players.Count == 0 ? 1 : Math.Max(1, Model.Players.Max(p => p.Score));
+}
+<div class="container page">
+    <div class="page-head no-print">
+        <div>
+            <a href="@Url.Action("History", "Game")" class="muted" style="font-weight:800">← Hesabatlar</a>
+            <h1 style="overflow-wrap:anywhere;margin-top:6px">@Model.QuizTitle</h1>
+            <div class="row muted" style="font-weight:700">
+                <span>@Ui.ModeEmoji(Model.Mode) @Ui.ModeName(Model.Mode)</span>
+                <span>PIN <b>@Model.Pin</b></span>
+                <span>@Ui.Local(Model.CreatedAt)</span>
+                <span class="chip @(Model.Status == GameStatus.Finished ? "green" : Model.Status == GameStatus.InProgress ? "amber" : "gray")">@Ui.StatusName(Model.Status)</span>
+            </div>
+        </div>
+        <div class="row">
+            @if (Model.Mode == GameMode.Challenge && Model.Status == GameStatus.InProgress)
+            {
+                <a class="btn" asp-action="Challenge" asp-route-id="@Model.GameId">İdarə et</a>
+            }
+            <a class="btn secondary" asp-action="ExportExcel" asp-route-id="@Model.GameId"><svg class="icon"><use href="#i-download" /></svg> Excel</a>
+            <a class="btn secondary" asp-action="ExportPdf" asp-route-id="@Model.GameId"><svg class="icon"><use href="#i-download" /></svg> PDF</a>
+            @if (Model.QuizId.HasValue) { <a class="btn" asp-action="Setup" asp-route-quizId="@Model.QuizId"><svg class="icon"><use href="#i-play" /></svg> Yenidən oyna</a> }
+        </div>
+    </div>
+
+    <div class="stat-grid mb">
+        <div class="stat"><b>@Model.PlayerCount</b><span>Oyunçu</span></div>
+        <div class="stat"><b>@Model.QuestionCount</b><span>Sual</span></div>
+        <div class="stat"><b>@Pct(Model.AverageAccuracy)%</b><span>Orta düzgünlük</span></div>
+        <div class="stat"><b>@Pct(Model.AverageScore)</b><span>Orta xal</span></div>
+    </div>
+
+    @if (Model.Teams.Count > 0)
+    {
+        <h2>Komandalar</h2>
+        <div class="grid cols-3 mb">
+            @foreach (var t in Model.Teams)
+            {
+                <div class="card" style="border-top:6px solid @ColorVars[t.ColorIndex % 6]">
+                    <div class="row between"><b style="font-size:1.15rem">@(t.Rank == 1 ? "🏆 " : "")@t.Name</b><span class="chip gray">@t.Members üzv</span></div>
+                    <div style="font-size:2rem;font-weight:900;color:var(--brand-700)">@t.Score</div>
+                </div>
+            }
+        </div>
+    }
+
+    <h2>Oyunçular</h2>
+    @if (Model.Players.Count == 0)
+    {
+        <div class="empty"><div class="big">🕸️</div><p class="muted" style="margin:0">Bu oyunda hələ heç kim iştirak etməyib.</p></div>
+    }
+    else
+    {
+        <div class="table-wrap mb">
+            <table class="t">
+                <thead><tr><th>Yer</th><th>Ləqəb</th>@if (Model.Teams.Count > 0) { <th>Komanda</th> }<th>Xal</th><th>Düzgün</th><th>Düzgünlük</th><th>Orta vaxt</th><th>Seriya</th></tr></thead>
+                <tbody>
+                @foreach (var p in Model.Players)
+                {
+                    <tr>
+                        <td><span class="rank-medal">@(p.Rank == 1 ? "🥇" : p.Rank == 2 ? "🥈" : p.Rank == 3 ? "🥉" : p.Rank.ToString())</span></td>
+                        <td style="font-weight:800;overflow-wrap:anywhere">@p.Nickname</td>
+                        @if (Model.Teams.Count > 0) { <td>@p.TeamName</td> }
+                        <td style="min-width:150px"><div class="row" style="gap:8px;flex-wrap:nowrap"><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:@Pct(p.Score * 100.0 / maxScore)%"></div></div><b>@p.Score</b></div></td>
+                        <td>@p.CorrectCount / @p.ScoredQuestions</td>
+                        <td><span class="chip @(p.Accuracy >= 70 ? "green" : p.Accuracy >= 40 ? "amber" : "red")">@Pct(p.Accuracy)%</span></td>
+                        <td>@((p.AverageResponseMs / 1000).ToString("0.0", inv)) san</td>
+                        <td>@p.MaxStreak</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2>Suallar üzrə statistika</h2>
+    @foreach (var q in Model.Questions)
+    {
+        var r = q.Result;
+        <details class="q-report">
+            <summary>
+                <span class="q-num">@q.Order</span>
+                <span><b style="overflow-wrap:anywhere">@q.Text</b><br /><span class="muted" style="font-size:.85rem">@Ui.TypeEmoji(q.Type) @Ui.TypeName(q.Type) · @q.Answered / @Model.PlayerCount cavab</span></span>
+                <span class="bar-cell">
+                    @if (q.Scored)
+                    {
+                        <div class="row" style="gap:8px;flex-wrap:nowrap"><div class="bar-track" style="flex:1"><div class="bar-fill @Cls(q.CorrectPercent)" style="width:@Pct(q.CorrectPercent)%"></div></div><b>@Pct(q.CorrectPercent)%</b></div>
+                    }
+                    else { <span class="chip gray">Xalsız sual</span> }
+                </span>
+            </summary>
+            <div class="inner">
+                @switch (q.Type)
+                {
+                    case QuestionType.MultipleChoice: case QuestionType.TrueFalse: case QuestionType.Poll:
+                        var total = Math.Max(1, r.OptionCounts.Sum());
+                        <div class="dist">
+                            @for (var i = 0; i < r.OptionTexts.Count; i++)
+                            {
+                                var ok = r.CorrectIndexes.Contains(i);
+                                <div class="d-row @(ok ? "ok" : "")">
+                                    <span class="d-label" style="overflow-wrap:anywhere">@r.OptionTexts[i]</span>
+                                    <div class="bar-track"><div class="bar-fill @(ok ? "good" : "")" style="width:@Pct(r.OptionCounts[i] * 100.0 / total)%;@(ok ? "" : "background:var(--c" + (i % 6) + ")")"></div></div>
+                                    <b>@r.OptionCounts[i]</b>
+                                </div>
+                            }
+                        </div>
+                        break;
+                    case QuestionType.Puzzle:
+                        <p class="muted">Düzgün ardıcıllıq: <b>@string.Join(" → ", r.CorrectOrder)</b></p>
+                        <p>Düzgün düzənlər: <b>@r.Correct</b> / @r.Answered</p>
+                        break;
+                    case QuestionType.TypeAnswer:
+                        <p class="muted">Qəbul olunan cavablar: <b>@string.Join(", ", r.AcceptedAnswers)</b></p>
+                        @if (r.Words.Count > 0) { <div class="wordchips">@foreach (var w in r.Words) { <span>@w.Word × @w.Count</span> }</div> }
+                        break;
+                    case QuestionType.Slider:
+                        <p class="muted">Düzgün dəyər: <b>@r.SliderCorrect?.ToString(inv)</b> (aralıq @r.SliderMin?.ToString(inv) – @r.SliderMax?.ToString(inv))</p>
+                        @if (r.SliderValues.Count > 0) { <p>Cavablar: @string.Join(", ", r.SliderValues.Take(40).Select(v => v.ToString("0.##", inv)))</p> }
+                        break;
+                    case QuestionType.WordCloud:
+                        @if (r.Words.Count > 0) { <div class="wordchips">@foreach (var w in r.Words) { <span>@w.Word × @w.Count</span> }</div> }
+                        else { <p class="muted">Cavab yoxdur.</p> }
+                        break;
+                    default:
+                        @if (r.Texts.Count > 0) { <ul>@foreach (var t in r.Texts) { <li style="overflow-wrap:anywhere">@t</li> }</ul> }
+                        else { <p class="muted">Cavab yoxdur.</p> }
+                        break;
+                }
+                <p class="muted" style="margin:12px 0 0;font-size:.88rem">Orta cavab müddəti: @((q.AverageResponseMs / 1000).ToString("0.0", inv)) san (limit @q.TimeLimitSeconds san)</p>
+            </div>
+        </details>
+    }
+</div>

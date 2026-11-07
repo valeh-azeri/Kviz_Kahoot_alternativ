@@ -1,0 +1,101 @@
+﻿@model GameSetupViewModel
+@{ ViewData["Title"] = "Oyun qur"; var q = Model.Quiz; }
+<div class="container page" style="max-width:920px">
+    <div class="page-head">
+        <div>
+            <div class="muted" style="font-weight:800">Oyun qur</div>
+            <h1 style="overflow-wrap:anywhere">@q.Title</h1>
+        </div>
+        <span class="chip">❓ @q.QuestionCount sual</span>
+    </div>
+
+    <form asp-action="Create" method="post" id="setupForm">
+        <input type="hidden" name="QuizId" value="@q.Id" />
+        <input type="hidden" name="DeadlineUtc" id="deadlineUtc" />
+
+        <h3>Rejim</h3>
+        <div class="grid cols-3 mb">
+            <label class="mode-card">
+                <input type="radio" name="Mode" value="LiveClassic" @(Model.Options.Mode == GameMode.LiveClassic ? "checked" : "") />
+                <div class="emoji">🎮</div><b>Canlı oyun</b>
+                <span class="d">Hamı eyni anda oynayır. Siz böyük ekranı idarə edirsiniz, oyunçular telefondan qoşulur.</span>
+            </label>
+            <label class="mode-card">
+                <input type="radio" name="Mode" value="LiveTeam" @(Model.Options.Mode == GameMode.LiveTeam ? "checked" : "") />
+                <div class="emoji">👥</div><b>Komanda oyunu</b>
+                <span class="d">Oyunçular avtomatik komandalara bölünür, komanda xalı üzvlərin orta xalıdır.</span>
+            </label>
+            <label class="mode-card">
+                <input type="radio" name="Mode" value="Challenge" @(Model.Options.Mode == GameMode.Challenge ? "checked" : "") />
+                <div class="emoji">📝</div><b>Tapşırıq</b>
+                <span class="d">Oyunçular son tarixə qədər sualları öz tempi ilə, istədikləri vaxt keçir.</span>
+            </label>
+        </div>
+
+        <div class="card mb">
+            <h3>Ayarlar</h3>
+            <div class="switch-row" data-for="LiveTeam">
+                <div><b>Komanda sayı</b><div class="muted" style="font-size:.9rem">2-6 komanda</div></div>
+                <select name="TeamCount" class="input" style="width:90px">
+                    @for (var i = 2; i <= 6; i++) { <option value="@i" selected="@(i == 2)">@i</option> }
+                </select>
+            </div>
+            <div class="switch-row" data-for="Challenge">
+                <div><b>Son tarix</b><div class="muted" style="font-size:.9rem">Bu vaxta qədər oyunçular qoşula və oynaya bilər</div></div>
+                <input type="datetime-local" id="deadlineLocal" class="input" style="width:230px" />
+            </div>
+            <label class="switch-row"><span><b>Sualları qarışdır</b><br /><span class="muted" style="font-size:.9rem">Sualların sırası hər oyunda təsadüfi olur</span></span><input type="checkbox" name="ShuffleQuestions" value="true" style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="ShuffleQuestions" value="false" /></label>
+            <label class="switch-row"><span><b>Cavab variantlarını qarışdır</b><br /><span class="muted" style="font-size:.9rem">Test və sorğularda variantların yeri dəyişir</span></span><input type="checkbox" name="ShuffleAnswers" value="true" checked style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="ShuffleAnswers" value="false" /></label>
+            <div class="switch-row" data-for="LiveClassic LiveTeam">
+                <div><b>Liderlər cədvəli</b><div class="muted" style="font-size:.9rem">Neçə sualdan bir ilk 5 göstərilsin. Son sualdan sonra həmişə yekun podium olur.</div></div>
+                <select name="LeaderboardEvery" class="input" style="width:auto;min-width:190px" aria-label="Liderlər cədvəlinin tezliyi">
+                    <option value="1" selected>Hər sualdan sonra</option>
+                    <option value="2">Hər 2 sualdan sonra</option>
+                    <option value="3">Hər 3 sualdan sonra</option>
+                    <option value="5">Hər 5 sualdan sonra</option>
+                    <option value="10">Hər 10 sualdan sonra</option>
+                    <option value="0">Göstərmə (yalnız sonda)</option>
+                </select>
+            </div>
+            <label class="switch-row" data-for="LiveClassic LiveTeam"><span><b>Liderləri əvvəl mən görüm</b><br /><span class="muted" style="font-size:.9rem">Liderlər cədvəli və yekun podium əvvəl yalnız sizin ekranda görünür. Oyunçuların telefonunda yer və xal da gizli qalır. “Oyunçulara göstər” düyməsinə basanda onlara açılır.</span></span><input type="checkbox" name="HostRevealsBoard" value="true" style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="HostRevealsBoard" value="false" /></label>
+            <label class="switch-row" data-for="LiveClassic LiveTeam"><span><b>Oyunçular öz şəklini avatar kimi yükləyə bilsin</b><br /><span class="muted" style="font-size:.9rem">Söndürsəniz, yalnız hazır avatarlardan (heyvanlar, personajlar…) seçiləcək. Telefondan seçilən şəkil avtomatik kiçildilir.</span></span><input type="checkbox" name="AllowPhotoAvatars" value="true" checked style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="AllowPhotoAvatars" value="false" /></label>
+            <label class="switch-row" data-for="Challenge"><span><b>Liderlər cədvəli</b><br /><span class="muted" style="font-size:.9rem">Oyunçulara nəticə və ilk 10 göstərilsin</span></span><input type="checkbox" name="ShowLeaderboard" value="true" checked style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="ShowLeaderboard" value="false" /></label>
+            <label class="switch-row"><span><b>Ardıcıl düzgün cavab bonusu</b><br /><span class="muted" style="font-size:.9rem">Hər ardıcıl düzgün cavab +100 xal (maks. +500)</span></span><input type="checkbox" name="StreakBonusEnabled" value="true" checked style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="StreakBonusEnabled" value="false" /></label>
+            <label class="switch-row" data-for="LiveClassic LiveTeam"><span><b>Güclər ⚡</b><br /><span class="muted" style="font-size:.9rem">İkiqat xal, 50/50 və seriya qoruyucusu (hər oyunçu hər birini bir dəfə)</span></span><input type="checkbox" name="PowerUpsEnabled" value="true" style="width:22px;height:22px;accent-color:var(--brand)" /><input type="hidden" name="PowerUpsEnabled" value="false" /></label>
+        </div>
+
+        <div class="row">
+            <button class="btn lg" type="submit" id="submitBtn"><svg class="icon"><use href="#i-play" /></svg> <span id="submitLabel">Oyunu başlat</span></button>
+            <a class="btn secondary lg" asp-controller="Quiz" asp-action="Details" asp-route-id="@q.Id">Geri</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+  const form = document.getElementById('setupForm');
+  const local = document.getElementById('deadlineLocal');
+  const utc = document.getElementById('deadlineUtc');
+  const pad = n => String(n).padStart(2, '0');
+  const d = new Date(Date.now() + 7 * 864e5);
+  local.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  function mode() { return form.querySelector('input[name=Mode]:checked').value; }
+  function sync() {
+    const m = mode();
+    form.querySelectorAll('[data-for]').forEach(r => {
+      const on = r.dataset.for.split(' ').includes(m);
+      r.style.display = on ? '' : 'none';
+      // Gizli sətirlərin sahələri göndərilməsin (rejimə aid olmayan ayarlar qarışmasın)
+      r.querySelectorAll('input,select').forEach(i => { i.disabled = !on; });
+    });
+    document.getElementById('submitLabel').textContent = m === 'Challenge' ? 'Tapşırığı yarat' : 'Oyunu başlat';
+    utc.disabled = m !== 'Challenge';
+  }
+  form.addEventListener('change', sync);
+  form.addEventListener('submit', () => { utc.value = local.value ? new Date(local.value).toISOString() : ''; });
+  sync();
+})();
+</script>
+}
+

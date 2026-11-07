@@ -1,0 +1,18 @@
+@model PlayViewModel
+@{
+    Layout = "_GameLayout";
+    ViewData["Title"] = Model.QuizTitle;
+}
+<div class="p-shell" id="app" data-pin="@Model.Pin" data-title="@Model.QuizTitle">
+    <div class="p-bar" id="pBar" hidden>
+        <span class="nick" id="pNick"></span>
+        <span class="score" id="pScore">0</span>
+    </div>
+    <div class="p-body" id="pBody">
+        <div class="p-center"><div class="spinner" aria-label="Yüklənir"></div></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/challenge.js" asp-append-version="true"></script>
+}

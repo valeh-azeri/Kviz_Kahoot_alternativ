@@ -1,0 +1,63 @@
+@model MyQuizzesViewModel
+@{
+    ViewData["Title"] = "Kvizlərim";
+    string PageUrl(int p) => Url.Action("Index", "Quiz", new { tab = Model.Tab, q = Model.Search, page = p })!;
+}
+<div class="container page">
+    <div class="page-head">
+        <h1>Kvizlərim</h1>
+        <div class="row">
+            <a class="btn secondary" asp-action="Import"><svg class="icon"><use href="#i-upload" /></svg> Excel-dən idxal</a>
+            <a class="btn" asp-action="Create"><svg class="icon"><use href="#i-plus" /></svg> Yeni kviz</a>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="tabs" role="tablist">
+            <a class="@(Model.Tab == "mine" ? "active" : "")" asp-action="Index" asp-route-tab="mine">Mənim kvizlərim</a>
+            <a class="@(Model.Tab == "fav" ? "active" : "")" asp-action="Index" asp-route-tab="fav">Sevimlilər</a>
+        </div>
+        @if (Model.Tab == "mine")
+        {
+            <form method="get" class="search" style="flex:1 1 260px;position:relative">
+                <svg class="icon" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)"><use href="#i-search" /></svg>
+                <input class="input" style="padding-left:42px" name="q" value="@Model.Search" placeholder="Kvizlərimdə axtar…" aria-label="Axtarış" />
+            </form>
+        }
+    </div>
+
+    @if (Model.Result.Items.Count == 0)
+    {
+        <div class="empty">
+            @if (Model.Tab == "fav")
+            {
+                <div class="big">💜</div>
+                <h3>Hələ sevimli kviziniz yoxdur</h3>
+                <p class="muted">Kitabxanada ürək işarəsinə basıb kvizləri burada toplayın.</p>
+                <a class="btn" asp-controller="Library" asp-action="Index">Kitabxanaya bax</a>
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.Search))
+            {
+                <div class="big">🔍</div>
+                <h3>“@Model.Search” üzrə nəticə yoxdur</h3>
+            }
+            else
+            {
+                <div class="big">🚀</div>
+                <h3>İlk kvizinizi yaradın</h3>
+                <p class="muted">Sıfırdan yaza, Excel-dən idxal edə və ya kitabxanadan kopyalaya bilərsiniz.</p>
+                <div class="row" style="justify-content:center">
+                    <a class="btn" asp-action="Create">Kviz yarat</a>
+                    <a class="btn secondary" asp-controller="Library" asp-action="Index">Kitabxanaya bax</a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="grid cols-3">
+            @foreach (var item in Model.Result.Items) { <partial name="_QuizCard" model="item" /> }
+        </div>
+        <partial name="_Pager" model="(Model.Result.Page, Model.Result.TotalPages, (Func<int, string>)PageUrl)" />
+    }
+</div>

@@ -1,0 +1,79 @@
+@model ChallengeManageViewModel
+@{
+    ViewData["Title"] = "Tapşırıq · " + Model.Game.QuizTitle;
+    var g = Model.Game;
+    var linkUrl = $"{Model.Join.BaseUrl}/c/{g.Pin}";
+}
+<div class="container page" id="chPage" data-id="@g.GameId">
+    <div class="page-head">
+        <div>
+            <div class="muted" style="font-weight:800">📝 Tapşırıq</div>
+            <h1 style="overflow-wrap:anywhere">@g.QuizTitle</h1>
+            <div class="row muted" style="font-weight:700">
+                <span>❓ @g.QuestionCount sual</span>
+                @if (g.Deadline.HasValue) { <span>⏳ Son tarix: @Ui.Local(g.Deadline.Value)</span> }
+                <span class="chip @(g.Status == GameStatus.InProgress ? "green" : "gray")">@(g.Status == GameStatus.InProgress ? "Açıqdır" : "Bağlanıb")</span>
+            </div>
+        </div>
+        <div class="row">
+            <a class="btn secondary" asp-action="Report" asp-route-id="@g.GameId">Tam hesabat</a>
+            @if (g.Status == GameStatus.InProgress)
+            {
+                <form asp-action="CloseChallenge" asp-route-id="@g.GameId" method="post" data-confirm="Tapşırıq bağlansın?|Bundan sonra yeni oyunçu qoşula və ya cavab verə bilməz.|Bağla">
+                    <button class="btn danger" type="submit">Tapşırığı bağla</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="grid cols-2">
+        <div class="card stack">
+            <h3>Oyunçulara göndərin</h3>
+            <p class="muted" style="margin:0">Oyunçular @Model.Join.ShortUrl ünvanına girib PIN yaza və ya birbaşa linkdən keçə bilər.</p>
+            <div style="text-align:center">
+                <div class="muted" style="font-weight:800">PIN</div>
+                <div style="font-size:3rem;font-weight:900;letter-spacing:.14em;color:var(--brand-700)">@g.Pin</div>
+            </div>
+            <div class="share-row">
+                <input class="input" readonly value="@linkUrl" aria-label="Tapşırıq linki" />
+                <button type="button" class="btn secondary" data-copy="@linkUrl"><svg class="icon"><use href="#i-copy" /></svg> Kopyala</button>
+            </div>
+            <div style="text-align:center"><img src="/qr?data=@Uri.EscapeDataString(linkUrl)" alt="QR kod" width="200" height="200" style="border:2px solid var(--line);border-radius:14px;padding:6px;background:#fff" /></div>
+            @if (Model.Join.Alternatives.Count > 1)
+            {
+                <div class="hint-box">Bu kompüterin bir neçə şəbəkə ünvanı var: @string.Join(", ", Model.Join.Alternatives). Telefonların qoşulduğu şəbəkəyə uyğun olanı istifadə edin.</div>
+            }
+        </div>
+
+        <div class="card">
+            <div class="row between"><h3 style="margin:0">Canlı nəticələr</h3><span class="chip" id="chCount">@Model.Board.Count oyunçu</span></div>
+            <div id="board" class="stack" style="margin-top:14px">
+                @if (Model.Board.Count == 0) { <p class="muted" id="boardEmpty">Hələ heç kim qoşulmayıb.</p> }
+                @foreach (var p in Model.Board)
+                {
+                    <div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>@p.Rank.</b> @p.Nickname</span><b>@p.Score</b></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+  const id = document.getElementById('chPage').dataset.id;
+  const box = document.getElementById('board');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  async function refresh() {
+    try {
+      const r = await fetch('/Game/ChallengeBoard/' + id, { credentials: 'same-origin' });
+      if (!r.ok) return;
+      const list = await r.json();
+      document.getElementById('chCount').textContent = list.length + ' oyunçu';
+      box.innerHTML = list.length ? list.map(p => `<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>${p.rank}.</b> ${esc(p.nickname)}</span><b>${p.score}</b></div>`).join('') : '<p class="muted">Hələ heç kim qoşulmayıb.</p>';
+    } catch { /* */ }
+  }
+  setInterval(refresh, 5000);
+})();
+</script>
+}

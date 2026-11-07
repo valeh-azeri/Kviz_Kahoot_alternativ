@@ -1,0 +1,25 @@
+# Qurulum nəticələri
+bin/
+obj/
+TestResults/
+*.log
+
+# Visual Studio / IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# İstifadəçi məzmunu: yüklənmiş şəkillər və oyunçu avatarları (şəxsi məlumatdır, repoya düşməməlidir)
+Kviz.Web/wwwroot/uploads/
+
+# Parol/açar faylları və yerli dəyişikliklər
+*.pfx
+*.key
+appsettings.Local.json
+appsettings.Production.json
+DataProtection-Keys/
+
+# Təsadüfən yaranmış boş fayl
+/ConnectionStrings

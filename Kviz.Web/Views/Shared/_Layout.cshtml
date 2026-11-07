@@ -1,0 +1,97 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject Kviz.Business.Services.ISettingsService Settings
+@{
+    var path = Context.Request.Path.Value ?? "/";
+    bool Active(string prefix) => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var isAuth = User.Identity?.IsAuthenticated == true;
+    var displayName = User.FindFirst("display_name")?.Value ?? User.Identity?.Name ?? "";
+}
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#6c3df0" />
+    <meta name="csrf" content="@token" />
+    <title>@(ViewData["Title"] is string t && t.Length > 0 ? t + " · Kvizo" : "Kvizo — oyunla öyrən")</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body class="@ViewData["BodyClass"]">
+    <partial name="_Icons" />
+    <header class="site-header" id="siteHeader">
+        <div class="container bar">
+            <a class="logo" asp-controller="Home" asp-action="Index" aria-label="Kvizo ana səhifə">
+                <partial name="_Logo" />
+            </a>
+            <nav class="main-nav" aria-label="Əsas menyu">
+                @if (isAuth || await Settings.IsGuestLibraryOpenAsync())
+                {
+                    <a asp-controller="Library" asp-action="Index" class="@(Active("/Library") ? "active" : "")">Kəşf et</a>
+                }
+                @if (isAuth)
+                {
+                    <a asp-controller="Quiz" asp-action="Index" class="@(Active("/Quiz") && !Active("/Quiz/Details") ? "active" : "")">Kvizlərim</a>
+                    <a asp-controller="Game" asp-action="History" class="@(Active("/Game/History") || Active("/Game/Report") ? "active" : "")">Hesabatlar</a>
+                    @if (User.IsInRole("Admin")) { <a href="/Admin" class="@(Active("/Admin") ? "active" : "")">Admin</a> }
+                }
+            </nav>
+            <button type="button" class="btn ghost icon-only nav-toggle" id="navToggle" aria-label="Menyunu aç" aria-expanded="false">
+                <svg class="icon"><use href="#i-menu" /></svg>
+            </button>
+            <div class="header-actions">
+                <form class="pin-mini" action="/join" method="get">
+                    <input class="input" name="pin" inputmode="numeric" autocomplete="off" placeholder="Oyun PIN" maxlength="8" aria-label="Oyun PIN kodu" />
+                    <button class="btn accent sm" type="submit">Qoşul</button>
+                </form>
+                @if (isAuth)
+                {
+                    <a class="btn sm" asp-controller="Quiz" asp-action="Create"><svg class="icon"><use href="#i-plus" /></svg> Yarat</a>
+                    <details class="user-menu">
+                        <summary><span class="avatar">@(displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "?")</span></summary>
+                        <div class="menu">
+                            <a asp-controller="Account" asp-action="Profile"><svg class="icon"><use href="#i-user" /></svg> Profil</a>
+                            <a asp-controller="Quiz" asp-action="Index"><svg class="icon"><use href="#i-file" /></svg> Kvizlərim</a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a href="/Admin"><svg class="icon"><use href="#i-shield" /></svg> Admin paneli</a>
+                            }
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit"><svg class="icon"><use href="#i-logout" /></svg> Çıxış</button>
+                            </form>
+                        </div>
+                    </details>
+                }
+                else
+                {
+                    <a class="btn secondary sm" asp-controller="Account" asp-action="Login">Daxil ol</a>
+                    <a class="btn sm" asp-controller="Account" asp-action="Register">Qeydiyyat</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <main>
+        @if (TempData["Success"] is string ok) { <div class="container" style="padding-top:18px"><div class="alert success" role="status">@ok</div></div> }
+        @if (TempData["Error"] is string err) { <div class="container" style="padding-top:18px"><div class="alert error" role="alert">@err</div></div> }
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container row between">
+            <span class="row" style="gap:12px"><span class="logo" style="font-size:1rem"><partial name="_Logo" /></span> hamı üçün pulsuz, oyunla öyrənmə platforması.</span>
+            <span class="muted">Bütün imkanlar açıqdır · İnternetsiz lokal şəbəkədə də işləyir</span>
+        </div>
+        <div class="container copyright">
+            <span>© @DateTime.Now.Year Valeh Süleymanov. Bütün hüquqlar qorunur.</span>
+            <a href="tel:+994772717540" aria-label="Telefon: 077 271 75 40"><svg class="icon"><use href="#i-phone" /></svg> 077 271 75 40</a>
+        </div>
+    </footer>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

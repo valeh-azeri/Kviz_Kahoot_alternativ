@@ -1,0 +1,56 @@
+@model PagedResult<AdminGameDto>
+@{
+    ViewData["Title"] = "Oyunlar · Admin";
+    string filter = ViewBag.Filter ?? "";
+    var back = Context.Request.Path + Context.Request.QueryString;
+    string PageUrl(int p) => Url.Action("Games", "Admin", new { filter, page = p })!;
+}
+<div class="container page">
+    <div class="page-head"><h1>Admin paneli</h1></div>
+    <partial name="_AdminNav" />
+
+    <form method="get" class="toolbar">
+        <select class="input" name="filter" style="width:auto" onchange="this.form.submit()" aria-label="Filtr">
+            <option value="" selected="@(filter == "")">Bütün oyunlar</option>
+            <option value="active" selected="@(filter == "active")">Davam edənlər</option>
+            <option value="finished" selected="@(filter == "finished")">Bitənlər</option>
+            <option value="cancelled" selected="@(filter == "cancelled")">Ləğv edilənlər</option>
+        </select>
+    </form>
+
+    <div class="table-wrap">
+        <table class="t">
+            <thead><tr><th>Tarix</th><th>Kviz</th><th>Host</th><th>Rejim</th><th>PIN</th><th>Oyunçu</th><th>Vəziyyət</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var g in Model.Items)
+            {
+                var active = g.Status is GameStatus.Lobby or GameStatus.InProgress;
+                <tr>
+                    <td style="white-space:nowrap">@Ui.Local(g.CreatedAt)</td>
+                    <td style="min-width:160px;font-weight:800;overflow-wrap:anywhere">@g.QuizTitle</td>
+                    <td>@g.HostName</td>
+                    <td style="white-space:nowrap">@Ui.ModeEmoji(g.Mode) @Ui.ModeName(g.Mode)</td>
+                    <td><b>@g.Pin</b></td>
+                    <td>@g.PlayerCount</td>
+                    <td><span class="chip @(active ? "amber" : g.Status == GameStatus.Finished ? "green" : "gray")">@Ui.StatusName(g.Status)</span></td>
+                    <td style="text-align:right;white-space:nowrap">
+                        @if (active)
+                        {
+                            <form asp-controller="Admin" asp-action="CancelGame" asp-route-id="@g.Id" method="post" style="display:inline" data-confirm="Oyun bağlansın?|Oyun dərhal dayandırılacaq.|Bağla">
+                                <input type="hidden" name="returnUrl" value="@back" />
+                                <button class="btn secondary sm" type="submit">Bağla</button>
+                            </form>
+                        }
+                        <form asp-controller="Admin" asp-action="DeleteGame" asp-route-id="@g.Id" method="post" style="display:inline" data-confirm="Oyun silinsin?|Oyun və bütün nəticələri həmişəlik silinəcək.|Sil">
+                            <input type="hidden" name="returnUrl" value="@back" />
+                            <button class="btn ghost sm" type="submit" style="color:var(--danger)" aria-label="Sil"><svg class="icon"><use href="#i-trash" /></svg></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0) { <tr><td colspan="8" class="muted center" style="padding:30px">Oyun tapılmadı.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_Pager" model="(Model.Page, Model.TotalPages, (Func<int, string>)PageUrl)" />
+</div>

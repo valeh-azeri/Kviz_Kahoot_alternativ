@@ -1,0 +1,87 @@
+@model QuizEditorViewModel
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@{
+    ViewData["Title"] = Model.Quiz.Id.HasValue ? "Kvizi redaktə et" : "Yeni kviz";
+    ViewData["BodyClass"] = "editor-page";
+    var json = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+}
+<script type="application/json" id="quiz-data">@Html.Raw(JsonSerializer.Serialize(Model.Quiz, json))</script>
+<script type="application/json" id="cat-data">@Html.Raw(JsonSerializer.Serialize(Model.Categories, json))</script>
+
+<div class="ed-top">
+    <div class="container">
+        <input id="edTitle" class="input ed-title" maxlength="120" placeholder="Kvizin adını yazın…" aria-label="Kvizin adı" />
+        <button type="button" class="btn secondary" id="btnSettings"><svg class="icon"><use href="#i-image" /></svg> Tənzimləmələr</button>
+        <a class="btn ghost" id="btnExit" href="@(Model.Quiz.Id.HasValue ? Url.Action("Details", "Quiz", new { id = Model.Quiz.Id }) : Url.Action("Index", "Quiz"))">Çıx</a>
+        <button type="button" class="btn ghost" id="btnDelete" style="color:var(--danger)" @(Model.Quiz.Id.HasValue ? "" : "hidden")><svg class="icon"><use href="#i-trash" /></svg> Kvizi sil</button>
+        <button type="button" class="btn success" id="btnSave"><svg class="icon"><use href="#i-check" /></svg> Yadda saxla</button>
+    </div>
+</div>
+
+<div class="ed-layout">
+    <aside class="ed-list" aria-label="Suallar">
+        <div class="ed-items" id="edItems"></div>
+        <button type="button" class="btn block" id="btnAdd"><svg class="icon"><use href="#i-plus" /></svg> Sual əlavə et</button>
+        <button type="button" class="btn secondary sm block" id="btnAutoImages" style="margin-top:8px" title="İnternet varsa, əlavə şəkli olmayan suallara uyğun şəkil gətirir (sualların öz şəkillərinə toxunmur)"><svg class="icon"><use href="#i-wand" /></svg> Suallara əlavə şəkil tap</button>
+    </aside>
+
+    <section class="ed-stage" id="edStage" aria-live="polite"></section>
+
+    <aside class="ed-side" id="edSide"></aside>
+</div>
+
+<dialog id="dlgType">
+    <div class="dlg-body">
+        <h3>Sual növünü seçin</h3>
+        <div class="type-grid" id="typeGrid"></div>
+    </div>
+    <div class="dlg-actions"><button type="button" class="btn secondary" data-close>Bağla</button></div>
+</dialog>
+
+<dialog id="dlgSettings">
+    <div class="dlg-body">
+        <h3>Kviz tənzimləmələri</h3>
+        <div class="field"><label for="sDesc">Təsvir</label><textarea id="sDesc" class="input" maxlength="500" placeholder="Bu kviz nə haqqındadır?"></textarea></div>
+        <div class="grid cols-2" style="gap:14px">
+            <div class="field"><label for="sCat">Kateqoriya</label><select id="sCat" class="input"></select></div>
+            <div class="field"><label for="sLang">Dil</label>
+                <select id="sLang" class="input">
+                    @foreach (var l in Ui.Languages) { <option value="@l.Code">@l.Name</option> }
+                </select>
+            </div>
+        </div>
+        <div class="field">
+            <label>Üz qabığı şəkli</label>
+            <div class="row">
+                <img id="sCoverPrev" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:10px;display:none" />
+                <label class="btn secondary sm" style="cursor:pointer"><svg class="icon"><use href="#i-upload" /></svg> Şəkil seç<input type="file" id="sCoverFile" accept="image/*" hidden /></label>
+                <button type="button" class="btn ghost sm" id="sCoverRm" style="display:none">Sil</button>
+            </div>
+        </div>
+        <label class="check"><input type="checkbox" id="sPublic" /> <span>Hamıya açıq olsun<small>Kitabxanada görünür, hər kəs oynaya və kopyalaya bilər.</small></span></label>
+    </div>
+    <div class="dlg-actions"><button type="button" class="btn" data-close>Hazırdır</button></div>
+</dialog>
+
+<dialog id="dlgImg" style="max-width:min(760px, calc(100vw - 24px))">
+    <div class="dlg-body">
+        <h3>İnternetdən şəkil tap</h3>
+        <p class="muted" style="margin-top:0;font-size:.9rem">Şəkillər <b>Openverse</b> və <b>Wikimedia Commons</b>-dan (pulsuz lisenziyalı) gətirilir. Qutuya söz yazsanız, <b>yalnız həmin söz</b> axtarılır və “Daha çox göstər” ilə davam edə bilərsiniz. Boş buraxsanız, təkliflər sualdan götürülür. Seçdiyiniz şəkil sualın <b>əlavə şəkli</b> olacaq: sualın öz şəklini əvəz etmir, onun altında göstərilir. Şəkil serverə yüklənir, ona görə oyun zamanı internet lazım olmur. Müəllif məlumatı şəklin altında göstəriləcək.</p>
+        <form id="imgForm" class="row" style="margin-bottom:14px">
+            <input id="imgQuery" class="input grow" style="min-width:200px;flex:1 1 200px" maxlength="80" placeholder="Axtarış sözü (boş buraxsanız sualdan götürülür)" aria-label="Axtarış sözü" />
+            <button class="btn" type="submit"><svg class="icon"><use href="#i-search" /></svg> Axtar</button>
+        </form>
+        <div id="imgStatus" class="muted" style="margin-bottom:10px"></div>
+        <div id="imgGrid" class="img-grid"></div>
+        <div class="center" style="margin-top:12px"><button type="button" class="btn secondary" id="imgMore" hidden>Daha çox göstər</button></div>
+    </div>
+    <div class="dlg-actions"><button type="button" class="btn secondary" data-close>Bağla</button></div>
+</dialog>
+
+<input type="file" id="qImageFile" accept="image/*" hidden />
+<input type="file" id="rImageFile" accept="image/*" hidden />
+
+@section Scripts {
+    <script src="~/js/quiz-editor.js" asp-append-version="true"></script>
+}
